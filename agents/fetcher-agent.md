@@ -82,3 +82,66 @@ Raw tweets saved to the `tweets` table in Supabase:
 
 > Cost optimization: reduce `count` to 500 (minimum for reliable DNA). Avoid re-fetching
 > analysts more than once per day — the `fetcher_runs` log enforces this guard.
+
+---
+
+## Adaptive Fetch Strategy
+
+Instead of fetching all analysts daily, the Fetcher assigns each analyst a **tier** based on
+how recently any user viewed them. This cuts monthly Fetcher cost by ~95%.
+
+See [ADAPTIVE_STRATEGY.md](ADAPTIVE_STRATEGY.md) for the full cost analysis and state machine.
+
+### Tiers
+
+| Tier   | Condition                      | Fetch Schedule         |
+| ------ | ------------------------------ | ---------------------- |
+| HOT    | `last_user_view_at` ≤ 7 days   | Daily at 06:00         |
+| WARM   | `last_user_view_at` 8–30 days  | Weekly (Sundays 06:00) |
+| COLD   | `last_user_view_at` > 30 days  | Monthly (1st at 06:00) |
+| PINNED | User explicitly pinned analyst | Always daily (HOT)     |
+
+### Fetch Logic Changes
+
+- **After initial fetch (500–1,000 tweets):** use `since_id` parameter for all subsequent
+  incremental fetches — only new tweets since the last run are pulled
+- **`analysts.fetch_tier`** column drives which analysts run on each cron invocation
+- **`analyst_user_views`** table tracks `(analyst_id, user_id, viewed_at)` — Fetcher reads
+  `MAX(viewed_at)` per analyst to determine tier
+- **Nightly rebalance job** at 02:00 recalculates and writes `fetch_tier` for all analysts
+
+### COLD Re-Entry (On-Demand)
+
+When a user views a COLD analyst, the agent fires an on-demand fetch immediately:
+
+1. Insert row in `analyst_user_views`
+2. Trigger Fetcher for that analyst (manual trigger path)
+3. Use `since_id` for incremental fetch — not a full 500-tweet pull
+4. Analyst promoted to HOT; normal daily cadence resumes
+
+### Adaptive Cost Estimates (20 Analysts)
+
+| Tier      | Count | Cost/Month     |
+| --------- | ----- | -------------- |
+| HOT       | 5     | $7.50          |
+| WARM      | 10    | $6.00          |
+| COLD      | 5     | $0.50          |
+| **Total** | 20    | **~$14/month** |
+
+Compared to $300–600/month naïve daily fetch → **~95% savings.**
+
+---
+
+## Plan-Based Limits (Future)
+
+> Implementation deferred to Monetization sprint. Reference only.
+
+| Plan    | Max Analysts | HOT Slots | Pinning | Stock Fit/day |
+| ------- | ------------ | --------- | ------- | ------------- |
+| FREE    | 3            | 1         | 0       | 5             |
+| PRO     | 10           | 3         | 2       | 50            |
+| PREMIUM | 50           | 10        | 10      | unlimited     |
+
+**HOT Slots** = maximum analysts a user can hold in HOT tier simultaneously.
+Analysts beyond a user's HOT slot cap are demoted to WARM regardless of view recency.
+Enforcement lives in the nightly rebalance job, not in the Fetcher itself.

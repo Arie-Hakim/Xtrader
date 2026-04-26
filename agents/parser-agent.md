@@ -80,3 +80,34 @@ Unprocessed tweets from the `tweets` table:
 - **Per 1,000 tweets:** ~$0.10–0.50
 - **Daily cost (20 analysts × 500 tweets):** ~**$1–5/day**
 - **Monthly:** ~**$30–150/month**
+
+---
+
+## Tier-Aware Parsing
+
+Parsing is event-driven after each Fetcher run, but the batch priority follows analyst tier:
+
+| Tier   | Parsing Behavior                                                  |
+| ------ | ----------------------------------------------------------------- |
+| HOT    | Parse all new tweets immediately after each daily fetch           |
+| WARM   | Parse in a batch job at end of week (Sunday evening, after fetch) |
+| COLD   | Parse alongside DNA refresh — once per month when fetch completes |
+| PINNED | Same as HOT — parse immediately                                   |
+
+**Implementation note:** the Parser queries `tweets WHERE processed = false` ordered by
+`analysts.fetch_tier ASC` (HOT first) so HOT analysts' insights are always ready before
+the 08:00 Recommender run.
+
+---
+
+## Tweet Deduplication
+
+Before calling `insight-extractor` on any tweet, apply these pre-filters:
+
+1. **ID check:** skip if `raw_data.tweet_id` already exists in the `insights` table
+   — prevents reprocessing tweets that were fetched again after a COLD re-entry
+2. **Length check:** skip if `tweet.content` length < 30 characters (likely noise —
+   retweet stubs, emoji-only posts, broken encoding)
+
+Both skipped tweets are still marked `processed = true` with a `skip_reason` field
+(`duplicate` or `too_short`) so they are not re-evaluated on the next run.
