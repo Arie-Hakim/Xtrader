@@ -109,3 +109,37 @@ Two writes to Supabase:
 - **Prompt size:** ~15,000–25,000 tokens (all active insights + analyst metadata)
 - **Per run:** ~**$0.05–0.15**
 - **Monthly:** ~**$1.50–4.50/month**
+
+---
+
+## Tier-Aware Reports
+
+The Recommender generates three report types on different cadences, each scoped to the
+analysts most relevant for that timeframe:
+
+| Report          | Cadence       | Analysts Included         | Trigger          |
+| --------------- | ------------- | ------------------------- | ---------------- |
+| Daily report    | Every morning | HOT + PINNED only         | Daily cron 08:00 |
+| Weekly digest   | Sundays 09:00 | HOT + PINNED + WARM       | Weekly cron      |
+| Monthly summary | 1st, 09:00    | All tiers (HOT/WARM/COLD) | Monthly cron     |
+
+### Daily Report (HOT + PINNED)
+
+- Loads insights only from analysts with `fetch_tier IN ('HOT', 'PINNED')`
+- Most actionable — these analysts were viewed recently and have fresh tweets
+- Produces ranked recommendations + Hebrew morning report (existing flow, unchanged)
+
+### Weekly Digest (+ WARM)
+
+- Extends the daily scope to include WARM analysts
+- WARM analysts fetched that Sunday morning are included if parsing completed
+- Report section header: `## עדכון שבועי — אנליסטים פעילים` (Weekly update — active analysts)
+- Surfaced as a separate `report_type = 'weekly'` row in `daily_reports`
+
+### Monthly Summary (All Tiers)
+
+- Includes COLD analysts — uses their most recent insights (may be weeks old)
+- Highlights DNA changes: analysts whose `dna_version` incremented this month
+- Useful for spotting analysts who were dormant but have updated their style
+- Report section header: `## סיכום חודשי — כל האנליסטים` (Monthly summary — all analysts)
+- Surfaced as `report_type = 'monthly'` in `daily_reports`

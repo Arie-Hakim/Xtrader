@@ -108,3 +108,37 @@ Fit result saved to `stock_fit_results` table (TTL 4 hours) and returned to user
 - **Per query (cache miss):** ~**$0.01–0.02**
 - **Cache hit rate:** ~70% (4-hour TTL across 20 analysts × 50 tickers)
 - **Monthly (1,000 queries, 30% cache miss):** ~**$3–6/month**
+
+---
+
+## Tier-Aware Caching
+
+Cache TTL for `stock_fit_results` varies by analyst tier and market hours:
+
+| Condition                               | Cache TTL |
+| --------------------------------------- | --------- |
+| Market hours (09:30–16:00 ET), any tier | 1 hour    |
+| Outside market hours, HOT analyst       | 12 hours  |
+| Outside market hours, WARM analyst      | 12 hours  |
+| Outside market hours, COLD analyst      | 24 hours  |
+| PINNED analyst (any time)               | 1 hour    |
+| FREE plan user (any analyst)            | 24 hours  |
+
+**Rationale:**
+
+- During market hours price/volume data changes fast — short TTL for everyone
+- COLD analysts have stale DNA by definition; serving a 24h cached result is acceptable
+- PINNED analysts are actively watched — always keep their results fresh (1h)
+- FREE users get longer cache to reduce per-user API cost
+
+### Implementation
+
+The `expires_at` value written to `stock_fit_results` is computed at insert time:
+
+```
+ttl = select_ttl(analyst.fetch_tier, user.plan, is_market_hours())
+expires_at = now() + ttl
+```
+
+The cache check at step 1 of the Flow remains unchanged — it reads `expires_at > now()`
+regardless of how TTL was originally set.

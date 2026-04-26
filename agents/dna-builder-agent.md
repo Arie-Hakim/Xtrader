@@ -94,3 +94,60 @@ DNA profile saved to `analyst_dna` table:
 
 > DNA Builder is the most cost-efficient agent — it runs only when it has enough signal.
 > A 20-analyst setup may trigger DNA Builder only 40 times/month total.
+
+---
+
+## Adaptive Trigger Logic
+
+The base trigger conditions (50+ new insights, new analyst, manual) are augmented per tier:
+
+### With Adaptive Strategy Active:
+
+| Tier   | DNA Rebuild Trigger                                                      |
+| ------ | ------------------------------------------------------------------------ |
+| HOT    | 100+ new insights since last `built_at` (raised threshold — more signal) |
+| WARM   | Monthly rebuild regardless of insight count                              |
+| COLD   | Rebuild on COLD → HOT re-entry (user views analyst after 30+ day gap)    |
+| PINNED | Same as HOT — 100+ new insights triggers rebuild                         |
+
+**New analyst threshold:** build DNA after first **200 insights** (reduced from 500 — enough
+signal for an initial DNA without waiting weeks for a new analyst to accumulate tweets).
+
+---
+
+## Incremental DNA Updates
+
+Instead of a full rebuild from scratch each time, the DNA Builder tracks its position
+and augments existing DNA with new signal only:
+
+### Version Tracking
+
+Two new fields on the `analyst_dna` table:
+
+| Column                    | Value                                          |
+| ------------------------- | ---------------------------------------------- |
+| `dna_version`             | Integer, incremented on each successful build  |
+| `analyzed_until_tweet_id` | X tweet ID of the most recent insight included |
+
+### Update Flow
+
+```
+1. Load existing DNA from analyst_dna (if version ≥ 1)
+2. Fetch only insights WHERE tweet_id > analyzed_until_tweet_id
+3. If new_insight_count < threshold → skip (return { skipped: true })
+4. Call dna-builder skill with:
+     existing_dna  = current DNA object
+     new_insights  = only the delta batch
+5. Skill merges new signal into existing DNA (augment mode, not full rebuild)
+6. Save: dna_version += 1, analyzed_until_tweet_id = MAX(new tweet_id)
+```
+
+### Full Rebuild Schedule
+
+Incremental augments accumulate drift over time. Force a full rebuild every **3 months**:
+
+- Set `force_rebuild = true` when `built_at < now() - 90 days`
+- Full rebuild loads up to 1,000 most recent insights (ignores `analyzed_until_tweet_id`)
+- Resets the version anchor to the latest tweet ID
+
+**Cost impact:** incremental augments cost ~60% less than a full rebuild (smaller prompt).
