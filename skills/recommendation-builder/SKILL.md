@@ -1,3 +1,9 @@
+---
+name: recommendation-builder
+description: Compute cross-analyst consensus and generate the daily Hebrew morning report
+version: 1.0.0
+---
+
 # Skill: recommendation-builder
 
 ## Purpose

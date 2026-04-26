@@ -1,3 +1,9 @@
+---
+name: analyst-classifier
+description: Classify an analyst's type and sub-type from a batch of 500–1,000 tweets
+version: 1.0.0
+---
+
 # Skill: analyst-classifier
 
 ## Purpose

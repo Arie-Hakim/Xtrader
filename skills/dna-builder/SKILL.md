@@ -1,3 +1,9 @@
+---
+name: dna-builder
+description: Build or update a comprehensive DNA profile for one analyst from a batch of 500–1,000 Insights
+version: 1.0.0
+---
+
 # Skill: dna-builder
 
 ## Purpose
