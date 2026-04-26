@@ -1,3 +1,9 @@
+---
+name: regime-classifier
+description: Classify the current market regime from real-time macro indicators
+version: 1.0.0
+---
+
 # Skill: regime-classifier
 
 ## Purpose

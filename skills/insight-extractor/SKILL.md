@@ -1,3 +1,9 @@
+---
+name: insight-extractor
+description: Extract a single structured Insight JSON from one tweet
+version: 1.0.0
+---
+
 # Skill: insight-extractor
 
 ## Purpose

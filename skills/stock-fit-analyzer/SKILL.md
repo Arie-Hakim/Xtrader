@@ -1,3 +1,9 @@
+---
+name: stock-fit-analyzer
+description: Determine how well a stock fits an analyst's methodology right now (DNA Simulator)
+version: 1.0.0
+---
+
 # Skill: stock-fit-analyzer
 
 ## Purpose
