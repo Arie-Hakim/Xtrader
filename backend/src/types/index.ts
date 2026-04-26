@@ -108,6 +108,8 @@ export interface StockFitResult {
 // DB row types — raw shapes returned by Supabase (enum values use underscores)
 // ---------------------------------------------------------------------------
 
+export type FetchTier = "HOT" | "WARM" | "COLD";
+
 export interface DbAnalystRow {
   id: string;
   username: string;
@@ -118,6 +120,39 @@ export interface DbAnalystRow {
   tweets_learned_count: number;
   is_active: boolean;
   created_at: string;
+  // Adaptive fetch columns (added in migration 002)
+  last_tweet_id: string | null;
+  last_fetched_at: string | null;
+  tweets_per_day_avg: number;
+  fetch_tier: FetchTier;
+  dna_version: number;
+  dna_analyzed_until_tweet_id: string | null;
+}
+
+export interface DbUserAnalystRow {
+  id: string;
+  user_id: string;
+  analyst_id: string;
+  is_pinned: boolean;
+  added_at: string;
+  last_view_at: string;
+}
+
+export interface DbUsageTrackingRow {
+  id: string;
+  user_id: string;
+  action: string;
+  date: string;
+  count: number;
+}
+
+export interface UserAnalyst {
+  id: string;
+  user_id: string;
+  analyst_id: string;
+  is_pinned: boolean;
+  added_at: string;
+  last_view_at: string;
 }
 
 export interface DbAnalystDnaRow {
