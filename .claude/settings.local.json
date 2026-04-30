@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm create *)"
+      "Bash(npm create *)",
+      "Read(//mnt/c/**)",
+      "Read(//c/Desktop//**)",
+      "Bash(./node_modules/.bin/tsc --version)"
     ]
   }
 }
