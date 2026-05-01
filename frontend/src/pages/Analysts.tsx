@@ -16,8 +16,8 @@ export function Analysts() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return analysts;
-    return analysts.filter(
+    if (!q) return data ?? [];
+    return (data ?? []).filter(
       (a) =>
         a.display_name.toLowerCase().includes(q) ||
         a.username.toLowerCase().includes(q) ||

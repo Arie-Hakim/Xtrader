@@ -16,17 +16,21 @@ const REGIME_LABELS: Record<string, string> = {
 
 function ScoreCircle({ score }: { score: number }) {
   const color =
-    score >= 7
+    score >= 8
       ? "text-green-600"
-      : score >= 5
+      : score >= 6
         ? "text-amber-500"
-        : "text-red-500";
+        : score >= 4
+          ? "text-orange-500"
+          : "text-red-500";
   const ring =
-    score >= 7
+    score >= 8
       ? "border-green-400"
-      : score >= 5
+      : score >= 6
         ? "border-amber-400"
-        : "border-red-400";
+        : score >= 4
+          ? "border-orange-400"
+          : "border-red-400";
   return (
     <div
       className={`flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 ${ring}`}
@@ -48,7 +52,7 @@ function ResultPanel({ result }: { result: StockFitResult }) {
         <p className="text-xs text-slate-500">
           מצב שוק נוכחי:{" "}
           <span className="font-medium">
-            {REGIME_LABELS[result.current_regime]}
+            {REGIME_LABELS[result.current_regime] ?? result.current_regime}
           </span>
         </p>
       </div>
@@ -56,7 +60,7 @@ function ResultPanel({ result }: { result: StockFitResult }) {
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
           <CheckCircle size={15} className="text-green-500" />
-          מדוע מתאים
+          ניתוח התאמה
         </h3>
         <p className="text-sm text-slate-600 leading-relaxed">
           {result.explanation_he}
@@ -124,7 +128,29 @@ export function Simulator() {
     queryFn: getAnalysts,
   });
 
-  const selectedAnalyst = analysts.find((a) => a.id === analystId);
+  const { data: analysts, isLoading: analystsLoading } = useQuery({
+    queryKey: ["analysts"],
+    queryFn: ({ signal }) => getAnalysts(signal),
+  });
+
+  const {
+    mutate,
+    data: result,
+    isPending,
+    error,
+    reset,
+  } = useMutation({
+    mutationFn: ({
+      analystId,
+      ticker,
+    }: {
+      analystId: string;
+      ticker: string;
+    }) => checkStockFit(analystId, ticker),
+  });
+
+  const selectedAnalyst = analysts?.find((a) => a.id === analystId);
+  const canSubmit = !!analystId && !!ticker.trim() && !isPending;
 
   async function handleCheck() {
     if (!analystId || !ticker.trim()) return;

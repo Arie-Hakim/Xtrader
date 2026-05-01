@@ -281,6 +281,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
   a1: [
     {
       id: "i1a1",
+      analyst_id: "a1",
       ticker: "NVDA",
       analyst_type: "trader-swing",
       direction: "bullish",
@@ -306,6 +307,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i2a1",
+      analyst_id: "a1",
       ticker: "META",
       analyst_type: "trader-swing",
       direction: "bullish",
@@ -330,6 +332,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i3a1",
+      analyst_id: "a1",
       ticker: "TSLA",
       analyst_type: "trader-swing",
       direction: "bearish",
@@ -357,6 +360,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
   a2: [
     {
       id: "i1a2",
+      analyst_id: "a2",
       ticker: "AAPL",
       analyst_type: "trader-position",
       direction: "bullish",
@@ -382,6 +386,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i2a2",
+      analyst_id: "a2",
       ticker: "MSFT",
       analyst_type: "trader-position",
       direction: "bullish",
@@ -406,6 +411,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i3a2",
+      analyst_id: "a2",
       ticker: "CRWD",
       analyst_type: "trader-position",
       direction: "bullish",
@@ -433,6 +439,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
   a3: [
     {
       id: "i1a3",
+      analyst_id: "a3",
       ticker: "BRK.B",
       analyst_type: "investor-value",
       direction: "bullish",
@@ -457,6 +464,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i2a3",
+      analyst_id: "a3",
       ticker: "JNJ",
       analyst_type: "investor-value",
       direction: "bullish",
@@ -481,6 +489,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i3a3",
+      analyst_id: "a3",
       ticker: "BAC",
       analyst_type: "investor-value",
       direction: "neutral",
@@ -507,6 +516,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
   a4: [
     {
       id: "i1a4",
+      analyst_id: "a4",
       ticker: "SNOW",
       analyst_type: "investor-growth",
       direction: "bullish",
@@ -531,6 +541,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i2a4",
+      analyst_id: "a4",
       ticker: "DDOG",
       analyst_type: "investor-growth",
       direction: "bullish",
@@ -555,6 +566,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i3a4",
+      analyst_id: "a4",
       ticker: "NET",
       analyst_type: "investor-growth",
       direction: "bullish",
@@ -581,6 +593,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
   a5: [
     {
       id: "i1a5",
+      analyst_id: "a5",
       ticker: "GLD",
       analyst_type: "macro",
       direction: "bullish",
@@ -605,6 +618,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i2a5",
+      analyst_id: "a5",
       ticker: "XLE",
       analyst_type: "macro",
       direction: "bullish",
@@ -629,6 +643,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i3a5",
+      analyst_id: "a5",
       ticker: "TLT",
       analyst_type: "macro",
       direction: "neutral",
@@ -655,6 +670,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
   a6: [
     {
       id: "i1a6",
+      analyst_id: "a6",
       ticker: "NVDA",
       analyst_type: "mixed",
       direction: "bullish",
@@ -680,6 +696,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i2a6",
+      analyst_id: "a6",
       ticker: "AAPL",
       analyst_type: "mixed",
       direction: "neutral",
@@ -704,6 +721,7 @@ const MOCK_INSIGHTS_BY_ANALYST: Record<string, Insight[]> = {
     },
     {
       id: "i3a6",
+      analyst_id: "a6",
       ticker: "META",
       analyst_type: "mixed",
       direction: "bullish",

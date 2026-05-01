@@ -6,7 +6,33 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-api.interceptors.response.use(
+function toHebrewMessage(err: unknown): { message: string; status?: number } {
+  if (axios.isAxiosError(err)) {
+    if (!err.response) {
+      if (err.code === "ECONNABORTED")
+        return { message: "השרת איטי – נסה שוב" };
+      return { message: "אין חיבור לשרת" };
+    }
+    const status = err.response.status;
+    const messages: Record<number, string> = {
+      401: "אין הרשאה",
+      403: "גישה אסורה",
+      404: "לא נמצא",
+      500: "שגיאת שרת – אנא נסה שוב",
+    };
+    return { message: messages[status] ?? "אירעה שגיאה", status };
+  }
+  return { message: "אירעה שגיאה" };
+}
+
+if (import.meta.env.DEV) {
+  http.interceptors.request.use((config) => {
+    console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  });
+}
+
+http.interceptors.response.use(
   (res) => res,
   (err) => Promise.reject(err),
 );

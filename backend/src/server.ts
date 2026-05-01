@@ -9,10 +9,12 @@ import { httpLogger } from "./middleware/logger";
 import { rateLimiter } from "./middleware/rateLimiter";
 import adminRouter from "./routes/admin";
 import analystsRouter from "./routes/analysts";
+import fetcherRouter from "./routes/fetcher";
 import healthRouter from "./routes/health";
 import insightsRouter from "./routes/insights";
 import stockFitRouter from "./routes/stockFit";
 import userAnalystsRouter from "./routes/userAnalysts";
+import { startScheduler } from "./cron/scheduler";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -36,6 +38,7 @@ app.use(express.json());
 // Routes
 app.use("/health", healthRouter);
 app.use("/api/analysts", analystsRouter);
+app.use("/api/fetch", fetcherRouter);
 app.use("/api/insights", insightsRouter);
 app.use("/api/stock-fit", stockFitRouter);
 app.use("/api/user-analysts", userAnalystsRouter);
@@ -43,6 +46,8 @@ app.use("/api/admin", adminRouter);
 
 // Global error handler — must be last
 app.use(errorHandler);
+
+startScheduler();
 
 app.listen(PORT, () => {
   console.log(`🚀 XTrader backend running on http://localhost:${PORT}`);

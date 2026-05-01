@@ -46,7 +46,7 @@ export function AnalystProfile() {
         <button
           type="button"
           onClick={() => navigate("/analysts")}
-          className="mt-4 flex items-center gap-1 text-sm text-brand-600 hover:underline mx-auto"
+          className="mt-4 mx-auto flex items-center gap-1 text-sm text-brand-600 hover:underline"
         >
           <ArrowRight size={14} />
           חזור לרשימת האנליסטים
