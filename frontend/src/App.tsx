@@ -1,17 +1,17 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Layout } from '@/components/layout/Layout'
-import { Dashboard } from '@/pages/Dashboard'
-import { Analysts } from '@/pages/Analysts'
-import { AnalystProfile } from '@/pages/AnalystProfile'
-import { Simulator } from '@/pages/Simulator'
-import { Settings } from '@/pages/Settings'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Layout } from "@/components/layout/Layout";
+import { Dashboard } from "@/pages/Dashboard";
+import { Analysts } from "@/pages/Analysts";
+import { AnalystProfile } from "@/pages/AnalystProfile";
+import { Simulator } from "@/pages/Simulator";
+import { Settings } from "@/pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 1000 * 60 * 5, retry: 1 },
   },
-})
+});
 
 export function App() {
   return (
@@ -28,5 +28,5 @@ export function App() {
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
-  )
+  );
 }

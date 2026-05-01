@@ -5,7 +5,7 @@
 @layer base {
   html {
     direction: rtl;
-    font-family: 'Heebo', sans-serif;
+    font-family: "Heebo", sans-serif;
   }
 
   body {
