@@ -1,9 +1,12 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { FlaskConical, ExternalLink, ArrowRight } from "lucide-react";
-import { getMockAnalystByUsername } from "@/data/mockAnalysts";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, FlaskConical } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { getAnalyst } from "@/services/api";
+import type { ApiError } from "@/services/errors";
 import { Badge } from "@/components/common/Badge";
 import { DNAViewer } from "@/components/analyst/DNAViewer";
-import { InsightRow } from "@/components/analyst/InsightRow";
+import { ErrorMessage } from "@/components/common/ErrorMessage";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 function Section({
   title,
@@ -23,7 +26,29 @@ function Section({
 export function AnalystProfile() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const data = username ? getMockAnalystByUsername(username) : null;
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["analyst", username],
+    queryFn: ({ signal }) => getAnalyst(username!, signal),
+    enabled: !!username,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage
+        message={(error as ApiError).hebrewMessage ?? "אירעה שגיאה"}
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   if (!data) {
     return (
@@ -32,7 +57,7 @@ export function AnalystProfile() {
         <button
           type="button"
           onClick={() => navigate("/analysts")}
-          className="mt-4 flex items-center gap-1 text-sm text-brand-600 hover:underline mx-auto"
+          className="mt-4 mx-auto flex items-center gap-1 text-sm text-brand-600 hover:underline"
         >
           <ArrowRight size={14} />
           חזור לרשימת האנליסטים
@@ -41,9 +66,9 @@ export function AnalystProfile() {
     );
   }
 
-  const { analyst, dna, insights, quotes } = data;
+  const { analyst, dna } = data;
   const trustScore = (analyst.analyst_weight * 10).toFixed(1);
-  const topTickers = dna.profile_data.top_tickers;
+  const topTickers = dna?.profile_data?.top_tickers ?? [];
 
   return (
     <div className="space-y-5">
@@ -84,71 +109,49 @@ export function AnalystProfile() {
       {/* DNA + Stocks */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Section title="🧬 DNA – פרופיל מסחר">
-            <DNAViewer dna={dna} />
-          </Section>
+          {dna ? (
+            <Section title="🧬 DNA – פרופיל מסחר">
+              <DNAViewer dna={dna} />
+            </Section>
+          ) : (
+            <Section title="🧬 DNA – פרופיל מסחר">
+              <p className="text-sm text-slate-400">
+                ה-DNA של האנליסט עדיין לא נבנה.
+                <br />
+                המערכת צריכה ללמוד לפחות 500 ציוצים לפני בניית הפרופיל.
+              </p>
+            </Section>
+          )}
         </div>
 
         <div className="space-y-5">
-          <Section title="📈 מניות מובילות">
-            <div className="flex flex-wrap gap-2">
-              {topTickers.map((ticker) => (
-                <span
-                  key={ticker}
-                  className="rounded-md bg-brand-50 px-3 py-1 font-mono text-sm font-semibold text-brand-700"
-                >
-                  {ticker}
-                </span>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="💬 ציטוטים בולטים">
-            <div className="space-y-3">
-              {quotes.map((q) => (
-                <blockquote
-                  key={q.id}
-                  className="border-r-2 border-brand-300 pr-3"
-                >
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    "{q.content}"
-                  </p>
-                  <a
-                    href={q.tweet_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 flex items-center gap-1 text-xs text-brand-500 hover:underline"
+          {topTickers.length > 0 && (
+            <Section title="📈 מניות מובילות">
+              <div className="flex flex-wrap gap-2">
+                {topTickers.map((ticker) => (
+                  <span
+                    key={ticker}
+                    className="rounded-md bg-brand-50 px-3 py-1 font-mono text-sm font-semibold text-brand-700"
                   >
-                    <ExternalLink size={11} />
-                    {q.date}
-                  </a>
-                </blockquote>
-              ))}
-            </div>
+                    {ticker}
+                  </span>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* Notable quotes: not available from backend yet */}
+          <Section title="💬 ציטוטים בולטים">
+            <p className="text-sm text-slate-400">בקרוב...</p>
           </Section>
         </div>
       </div>
 
-      {/* Insights table */}
+      {/* Insights table: not available per-analyst from backend yet */}
       <Section title="📊 Insights אחרונים">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right">
-            <thead>
-              <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="pb-2 pr-4 pl-2">מניה</th>
-                <th className="pb-2 px-2">כיוון</th>
-                <th className="pb-2 px-2">עוצמה</th>
-                <th className="pb-2 px-2">נימוק</th>
-                <th className="pb-2 pl-4 pr-2 text-left">תאריך</th>
-              </tr>
-            </thead>
-            <tbody>
-              {insights.map((insight) => (
-                <InsightRow key={insight.id} insight={insight} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="text-sm text-slate-400">
+          נתוני Insights לפי אנליסט יהיו זמינים בקרוב.
+        </p>
       </Section>
 
       <p className="text-center text-xs text-slate-400">
