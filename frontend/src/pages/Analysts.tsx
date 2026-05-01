@@ -1,20 +1,18 @@
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
+import { Search, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, Users } from "lucide-react";
 import { getAnalysts } from "@/services/api";
-import type { ApiError } from "@/services/errors";
 import { AnalystCard } from "@/components/analyst/AnalystCard";
-import { EmptyState } from "@/components/common/EmptyState";
-import { ErrorMessage } from "@/components/common/ErrorMessage";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 export function Analysts() {
   const [query, setQuery] = useState("");
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["analysts"],
-    queryFn: ({ signal }) => getAnalysts(signal),
-  });
+  const {
+    data: analysts = [],
+    isLoading,
+    isError,
+  } = useQuery({ queryKey: ["analysts"], queryFn: getAnalysts });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -25,7 +23,7 @@ export function Analysts() {
         a.username.toLowerCase().includes(q) ||
         a.analyst_type.includes(q),
     );
-  }, [query, data]);
+  }, [query, analysts]);
 
   return (
     <div className="space-y-5">
@@ -58,37 +56,37 @@ export function Analysts() {
         </div>
       )}
 
-      {error && !isLoading && (
-        <ErrorMessage
-          message={(error as ApiError).hebrewMessage ?? "אירעה שגיאה"}
-          onRetry={() => refetch()}
-        />
+      {isError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="text-sm text-red-600">
+            שגיאה בטעינת האנליסטים. נסה שוב.
+          </p>
+        </div>
       )}
 
-      {!isLoading && !error && (data ?? []).length === 0 && (
-        <EmptyState message="אין אנליסטים עדיין" icon={<Users size={40} />} />
+      {!isLoading && !isError && analysts.length === 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-slate-400">אין אנליסטים עדיין.</p>
+        </div>
       )}
 
-      {!isLoading &&
-        !error &&
-        filtered.length === 0 &&
-        (data ?? []).length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <p className="text-sm text-slate-400">
-              לא נמצאו אנליסטים התואמים את החיפוש.
-            </p>
-          </div>
-        )}
-
-      {!isLoading && !error && filtered.length > 0 && (
+      {!isLoading && !isError && analysts.length > 0 && (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((analyst) => (
-              <AnalystCard key={analyst.id} analyst={analyst} />
-            ))}
-          </div>
+          {filtered.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+              <p className="text-sm text-slate-400">
+                לא נמצאו אנליסטים התואמים את החיפוש.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((analyst) => (
+                <AnalystCard key={analyst.id} analyst={analyst} />
+              ))}
+            </div>
+          )}
           <p className="text-center text-xs text-slate-400">
-            מוצגים {filtered.length} מתוך {(data ?? []).length} אנליסטים
+            מוצגים {filtered.length} מתוך {analysts.length} אנליסטים
           </p>
         </>
       )}

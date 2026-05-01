@@ -1,17 +1,8 @@
 import axios from "axios";
-import type { Analyst, Insight } from "@/types";
-import type { AnalystProfile, StockFitResult } from "@/types/analyst";
-import { ApiError } from "./errors";
-import {
-  mapAnalyst,
-  mapAnalystProfile,
-  mapInsight,
-  mapStockFitResult,
-} from "./mappers";
+import type { Analyst, AnalystDNA, StockFitResult } from "@/types";
 
-const http = axios.create({
+const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3001",
-  timeout: 10000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -43,52 +34,37 @@ if (import.meta.env.DEV) {
 
 http.interceptors.response.use(
   (res) => res,
-  (err: unknown) => {
-    const { message, status } = toHebrewMessage(err);
-    return Promise.reject(new ApiError(message, status, err));
-  },
+  (err) => Promise.reject(err),
 );
 
-export async function getAnalysts(signal?: AbortSignal): Promise<Analyst[]> {
-  const res = await http.get<unknown[]>("/api/analysts", { signal });
-  return res.data.map(mapAnalyst);
+export async function getAnalysts(): Promise<Analyst[]> {
+  const { data } = await api.get<Analyst[]>("/api/analysts");
+  return data;
 }
 
-export async function getAnalyst(
+export async function getAnalystByUsername(
   username: string,
-  signal?: AbortSignal,
-): Promise<AnalystProfile> {
-  const res = await http.get<unknown>(`/api/analysts/${username}`, { signal });
-  return mapAnalystProfile(res.data);
-}
-
-export async function getInsights(
-  ticker: string,
-  signal?: AbortSignal,
-): Promise<Insight[]> {
-  const res = await http.get<unknown[]>("/api/insights", {
-    params: { ticker },
-    signal,
-  });
-  return res.data.map(mapInsight);
+): Promise<{ analyst: Analyst; dna: AnalystDNA | null }> {
+  const { data } = await api.get<{ analyst: Analyst; dna: AnalystDNA | null }>(
+    `/api/analysts/${username}`,
+  );
+  return data;
 }
 
 export async function checkStockFit(
-  analystId: string,
+  analyst_id: string,
   ticker: string,
-  signal?: AbortSignal,
-): Promise<StockFitResult> {
-  const res = await http.post<{ result: unknown }>(
-    "/api/stock-fit",
-    { analyst_id: analystId, ticker },
-    { signal },
-  );
-  return mapStockFitResult(res.data.result);
+): Promise<{
+  result: StockFitResult;
+  cache_hit: boolean;
+  plan_remaining: number;
+}> {
+  const { data } = await api.post<{
+    result: StockFitResult;
+    cache_hit: boolean;
+    plan_remaining: number;
+  }>("/api/stock-fit", { analyst_id, ticker });
+  return data;
 }
 
-export async function getUserAnalysts(
-  signal?: AbortSignal,
-): Promise<unknown[]> {
-  const res = await http.get<unknown[]>("/api/user-analysts", { signal });
-  return res.data;
-}
+export default api;

@@ -1,11 +1,9 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { FlaskConical, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, FlaskConical } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { getAnalyst } from "@/services/api";
-import type { ApiError } from "@/services/errors";
+import { getAnalystByUsername } from "@/services/api";
 import { Badge } from "@/components/common/Badge";
 import { DNAViewer } from "@/components/analyst/DNAViewer";
-import { ErrorMessage } from "@/components/common/ErrorMessage";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 function Section({
@@ -27,9 +25,9 @@ export function AnalystProfile() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["analyst", username],
-    queryFn: ({ signal }) => getAnalyst(username!, signal),
+    queryFn: () => getAnalystByUsername(username!),
     enabled: !!username,
   });
 
@@ -41,16 +39,7 @@ export function AnalystProfile() {
     );
   }
 
-  if (error) {
-    return (
-      <ErrorMessage
-        message={(error as ApiError).hebrewMessage ?? "אירעה שגיאה"}
-        onRetry={() => refetch()}
-      />
-    );
-  }
-
-  if (!data) {
+  if (isError || !data) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
         <p className="text-slate-500">אנליסט לא נמצא.</p>
@@ -68,7 +57,6 @@ export function AnalystProfile() {
 
   const { analyst, dna } = data;
   const trustScore = (analyst.analyst_weight * 10).toFixed(1);
-  const topTickers = dna?.profile_data?.top_tickers ?? [];
 
   return (
     <div className="space-y-5">
@@ -106,29 +94,19 @@ export function AnalystProfile() {
         </button>
       </div>
 
-      {/* DNA + Stocks */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {dna ? (
+      {/* DNA */}
+      {dna ? (
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             <Section title="🧬 DNA – פרופיל מסחר">
               <DNAViewer dna={dna} />
             </Section>
-          ) : (
-            <Section title="🧬 DNA – פרופיל מסחר">
-              <p className="text-sm text-slate-400">
-                ה-DNA של האנליסט עדיין לא נבנה.
-                <br />
-                המערכת צריכה ללמוד לפחות 500 ציוצים לפני בניית הפרופיל.
-              </p>
-            </Section>
-          )}
-        </div>
+          </div>
 
-        <div className="space-y-5">
-          {topTickers.length > 0 && (
+          <div>
             <Section title="📈 מניות מובילות">
               <div className="flex flex-wrap gap-2">
-                {topTickers.map((ticker) => (
+                {dna.profile_data.top_tickers.map((ticker) => (
                   <span
                     key={ticker}
                     className="rounded-md bg-brand-50 px-3 py-1 font-mono text-sm font-semibold text-brand-700"
@@ -138,21 +116,15 @@ export function AnalystProfile() {
                 ))}
               </div>
             </Section>
-          )}
-
-          {/* Notable quotes: not available from backend yet */}
-          <Section title="💬 ציטוטים בולטים">
-            <p className="text-sm text-slate-400">בקרוב...</p>
-          </Section>
+          </div>
         </div>
-      </div>
-
-      {/* Insights table: not available per-analyst from backend yet */}
-      <Section title="📊 Insights אחרונים">
-        <p className="text-sm text-slate-400">
-          נתוני Insights לפי אנליסט יהיו זמינים בקרוב.
-        </p>
-      </Section>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-slate-400">
+            DNA עדיין לא נוצר עבור אנליסט זה.
+          </p>
+        </div>
+      )}
 
       <p className="text-center text-xs text-slate-400">
         מידע בלבד. אין זה ייעוץ פיננסי. ביצועי עבר אינם מבטיחים עתיד.
