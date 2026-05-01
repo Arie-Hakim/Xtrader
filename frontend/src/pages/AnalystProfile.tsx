@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { FlaskConical, ExternalLink, ArrowRight } from "lucide-react";
-import { getMockAnalystByUsername } from "@/data/mockAnalysts";
+import { FlaskConical, ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getAnalystByUsername } from "@/services/api";
 import { Badge } from "@/components/common/Badge";
 import { DNAViewer } from "@/components/analyst/DNAViewer";
-import { InsightRow } from "@/components/analyst/InsightRow";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 function Section({
   title,
@@ -23,9 +24,22 @@ function Section({
 export function AnalystProfile() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const data = username ? getMockAnalystByUsername(username) : null;
 
-  if (!data) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["analyst", username],
+    queryFn: () => getAnalystByUsername(username!),
+    enabled: !!username,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (isError || !data) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
         <p className="text-slate-500">אנליסט לא נמצא.</p>
@@ -41,9 +55,8 @@ export function AnalystProfile() {
     );
   }
 
-  const { analyst, dna, insights, quotes } = data;
+  const { analyst, dna } = data;
   const trustScore = (analyst.analyst_weight * 10).toFixed(1);
-  const topTickers = dna.profile_data.top_tickers;
 
   return (
     <div className="space-y-5">
@@ -81,75 +94,37 @@ export function AnalystProfile() {
         </button>
       </div>
 
-      {/* DNA + Stocks */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Section title="🧬 DNA – פרופיל מסחר">
-            <DNAViewer dna={dna} />
-          </Section>
-        </div>
+      {/* DNA */}
+      {dna ? (
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Section title="🧬 DNA – פרופיל מסחר">
+              <DNAViewer dna={dna} />
+            </Section>
+          </div>
 
-        <div className="space-y-5">
-          <Section title="📈 מניות מובילות">
-            <div className="flex flex-wrap gap-2">
-              {topTickers.map((ticker) => (
-                <span
-                  key={ticker}
-                  className="rounded-md bg-brand-50 px-3 py-1 font-mono text-sm font-semibold text-brand-700"
-                >
-                  {ticker}
-                </span>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="💬 ציטוטים בולטים">
-            <div className="space-y-3">
-              {quotes.map((q) => (
-                <blockquote
-                  key={q.id}
-                  className="border-r-2 border-brand-300 pr-3"
-                >
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    "{q.content}"
-                  </p>
-                  <a
-                    href={q.tweet_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 flex items-center gap-1 text-xs text-brand-500 hover:underline"
+          <div>
+            <Section title="📈 מניות מובילות">
+              <div className="flex flex-wrap gap-2">
+                {dna.profile_data.top_tickers.map((ticker) => (
+                  <span
+                    key={ticker}
+                    className="rounded-md bg-brand-50 px-3 py-1 font-mono text-sm font-semibold text-brand-700"
                   >
-                    <ExternalLink size={11} />
-                    {q.date}
-                  </a>
-                </blockquote>
-              ))}
-            </div>
-          </Section>
+                    {ticker}
+                  </span>
+                ))}
+              </div>
+            </Section>
+          </div>
         </div>
-      </div>
-
-      {/* Insights table */}
-      <Section title="📊 Insights אחרונים">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right">
-            <thead>
-              <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="pb-2 pr-4 pl-2">מניה</th>
-                <th className="pb-2 px-2">כיוון</th>
-                <th className="pb-2 px-2">עוצמה</th>
-                <th className="pb-2 px-2">נימוק</th>
-                <th className="pb-2 pl-4 pr-2 text-left">תאריך</th>
-              </tr>
-            </thead>
-            <tbody>
-              {insights.map((insight) => (
-                <InsightRow key={insight.id} insight={insight} />
-              ))}
-            </tbody>
-          </table>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-slate-400">
+            DNA עדיין לא נוצר עבור אנליסט זה.
+          </p>
         </div>
-      </Section>
+      )}
 
       <p className="text-center text-xs text-slate-400">
         מידע בלבד. אין זה ייעוץ פיננסי. ביצועי עבר אינם מבטיחים עתיד.

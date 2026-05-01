@@ -1,12 +1,18 @@
 import { useState, useMemo } from "react";
 import { Search, Plus } from "lucide-react";
-import { getMockAnalysts } from "@/data/mockAnalysts";
+import { useQuery } from "@tanstack/react-query";
+import { getAnalysts } from "@/services/api";
 import { AnalystCard } from "@/components/analyst/AnalystCard";
-
-const analysts = getMockAnalysts();
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 export function Analysts() {
   const [query, setQuery] = useState("");
+
+  const {
+    data: analysts = [],
+    isLoading,
+    isError,
+  } = useQuery({ queryKey: ["analysts"], queryFn: getAnalysts });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -17,7 +23,7 @@ export function Analysts() {
         a.username.toLowerCase().includes(q) ||
         a.analyst_type.includes(q),
     );
-  }, [query]);
+  }, [query, analysts]);
 
   return (
     <div className="space-y-5">
@@ -44,23 +50,46 @@ export function Analysts() {
         </button>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-          <p className="text-sm text-slate-400">
-            לא נמצאו אנליסטים התואמים את החיפוש.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((analyst) => (
-            <AnalystCard key={analyst.id} analyst={analyst} />
-          ))}
+      {isLoading && (
+        <div className="flex justify-center py-16">
+          <LoadingSpinner />
         </div>
       )}
 
-      <p className="text-center text-xs text-slate-400">
-        מוצגים {filtered.length} מתוך {analysts.length} אנליסטים
-      </p>
+      {isError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="text-sm text-red-600">
+            שגיאה בטעינת האנליסטים. נסה שוב.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !isError && analysts.length === 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-slate-400">אין אנליסטים עדיין.</p>
+        </div>
+      )}
+
+      {!isLoading && !isError && analysts.length > 0 && (
+        <>
+          {filtered.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+              <p className="text-sm text-slate-400">
+                לא נמצאו אנליסטים התואמים את החיפוש.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((analyst) => (
+                <AnalystCard key={analyst.id} analyst={analyst} />
+              ))}
+            </div>
+          )}
+          <p className="text-center text-xs text-slate-400">
+            מוצגים {filtered.length} מתוך {analysts.length} אנליסטים
+          </p>
+        </>
+      )}
     </div>
   );
 }

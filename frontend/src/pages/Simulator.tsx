@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Search, ExternalLink, AlertTriangle, CheckCircle } from "lucide-react";
-import { getMockAnalysts, getMockStockFitResult } from "@/data/mockAnalysts";
+import { useQuery } from "@tanstack/react-query";
+import { getAnalysts, checkStockFit } from "@/services/api";
 import { Badge } from "@/components/common/Badge";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import type { StockFitResult } from "@/types";
-
-const analysts = getMockAnalysts();
 
 const REGIME_LABELS: Record<string, string> = {
   BULL_STRONG: "שורי חזק 🟢",
@@ -40,7 +40,6 @@ function ScoreCircle({ score }: { score: number }) {
 function ResultPanel({ result }: { result: StockFitResult }) {
   return (
     <div className="space-y-5">
-      {/* Score */}
       <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           ציון התאמה – {result.ticker}
@@ -54,7 +53,6 @@ function ResultPanel({ result }: { result: StockFitResult }) {
         </p>
       </div>
 
-      {/* Why it matches */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
           <CheckCircle size={15} className="text-green-500" />
@@ -65,7 +63,6 @@ function ResultPanel({ result }: { result: StockFitResult }) {
         </p>
       </div>
 
-      {/* Risks */}
       {result.risks_he.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -86,7 +83,6 @@ function ResultPanel({ result }: { result: StockFitResult }) {
         </div>
       )}
 
-      {/* Relevant tweet */}
       {result.relevant_tweet_url && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-slate-700">
@@ -120,12 +116,32 @@ export function Simulator() {
   const [analystId, setAnalystId] = useState("");
   const [ticker, setTicker] = useState("");
   const [result, setResult] = useState<StockFitResult | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const { data: analysts = [], isLoading: loadingAnalysts } = useQuery({
+    queryKey: ["analysts"],
+    queryFn: getAnalysts,
+  });
 
   const selectedAnalyst = analysts.find((a) => a.id === analystId);
 
-  function handleCheck() {
+  async function handleCheck() {
     if (!analystId || !ticker.trim()) return;
-    setResult(getMockStockFitResult(analystId, ticker.trim()));
+    setIsChecking(true);
+    setCheckError(null);
+    setResult(null);
+    try {
+      const { result: fitResult } = await checkStockFit(
+        analystId,
+        ticker.trim(),
+      );
+      setResult(fitResult);
+    } catch {
+      setCheckError("שגיאה בבדיקת ההתאמה. נסה שוב.");
+    } finally {
+      setIsChecking(false);
+    }
   }
 
   return (
@@ -142,21 +158,28 @@ export function Simulator() {
           <label className="mb-1.5 block text-sm font-medium text-slate-600">
             בחר אנליסט
           </label>
-          <select
-            value={analystId}
-            onChange={(e) => {
-              setAnalystId(e.target.value);
-              setResult(null);
-            }}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          >
-            <option value="">-- בחר אנליסט --</option>
-            {analysts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.display_name} (@{a.username})
-              </option>
-            ))}
-          </select>
+          {loadingAnalysts ? (
+            <div className="flex justify-center py-4">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <select
+              value={analystId}
+              onChange={(e) => {
+                setAnalystId(e.target.value);
+                setResult(null);
+                setCheckError(null);
+              }}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">-- בחר אנליסט --</option>
+              {analysts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.display_name} (@{a.username})
+                </option>
+              ))}
+            </select>
+          )}
           {selectedAnalyst && (
             <div className="mt-2 flex items-center gap-2">
               <Badge type={selectedAnalyst.analyst_type} />
@@ -178,6 +201,7 @@ export function Simulator() {
             onChange={(e) => {
               setTicker(e.target.value.toUpperCase());
               setResult(null);
+              setCheckError(null);
             }}
             onKeyDown={(e) => e.key === "Enter" && handleCheck()}
             placeholder="NVDA"
@@ -187,23 +211,31 @@ export function Simulator() {
 
         <button
           type="button"
-          disabled={!analystId || !ticker.trim()}
+          disabled={!analystId || !ticker.trim() || isChecking}
           onClick={handleCheck}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:opacity-40"
         >
           <Search size={16} />
-          בדוק התאמה
+          {isChecking ? "בודק..." : "בדוק התאמה"}
         </button>
       </div>
+
+      {checkError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="text-sm text-red-600">{checkError}</p>
+        </div>
+      )}
 
       {result ? (
         <ResultPanel result={result} />
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
-          <p className="text-sm text-slate-400">
-            תוצאת ההתאמה תוצג כאן לאחר הבדיקה.
-          </p>
-        </div>
+        !checkError && (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
+            <p className="text-sm text-slate-400">
+              תוצאת ההתאמה תוצג כאן לאחר הבדיקה.
+            </p>
+          </div>
+        )
       )}
     </div>
   );
