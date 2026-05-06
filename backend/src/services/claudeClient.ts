@@ -7,7 +7,11 @@ import { AppError } from "../types";
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) throw new Error("ANTHROPIC_API_KEY is required");
 
-const model: string = process.env.ANTHROPIC_MODEL ?? (() => { throw new Error("ANTHROPIC_MODEL is required"); })();
+const model: string =
+  process.env.ANTHROPIC_MODEL ??
+  (() => {
+    throw new Error("ANTHROPIC_MODEL is required");
+  })();
 
 const client = new Anthropic({ apiKey, maxRetries: 3 });
 
@@ -70,7 +74,11 @@ export async function callClaude(
 
   const block = response.content[0];
   if (!block || block.type !== "text") {
-    throw new AppError("שגיאה בתגובת Claude — תגובה לא צפויה", 500, "CLAUDE_ERROR");
+    throw new AppError(
+      "שגיאה בתגובת Claude — תגובה לא צפויה",
+      500,
+      "CLAUDE_ERROR",
+    );
   }
 
   return block.text;

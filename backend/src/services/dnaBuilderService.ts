@@ -49,12 +49,18 @@ export async function buildDNA(
     insights: sample,
   };
 
-  logger.info({ analystId, insightCount: count, sending: sample.length }, "building dna");
+  logger.info(
+    { analystId, insightCount: count, sending: sample.length },
+    "building dna",
+  );
   const raw = await callClaude(prompt, JSON.stringify(input));
   const parsed = DnaResponseSchema.safeParse(extractJson(raw));
 
   if (!parsed.success) {
-    logger.error({ analystId, issues: parsed.error.issues }, "invalid dna response");
+    logger.error(
+      { analystId, issues: parsed.error.issues },
+      "invalid dna response",
+    );
     throw new AppError("Claude החזיר DNA לא תקין", 500, "CLAUDE_INVALID");
   }
 
@@ -67,7 +73,11 @@ export async function buildDNA(
     .maybeSingle();
 
   const nextVersion = (existing?.version ?? 0) + 1;
-  const profile = { ...parsed.data, version: nextVersion, analyst_id: analyst.id };
+  const profile = {
+    ...parsed.data,
+    version: nextVersion,
+    analyst_id: analyst.id,
+  };
 
   await supabase.from("analyst_dna").upsert({
     analyst_id: analyst.id,

@@ -8,7 +8,11 @@ import {
   getCacheTTL,
   setCachedStockFit,
 } from "../services/cacheManager";
-import { callClaude, extractJson, loadSkillPrompt } from "../services/claudeClient";
+import {
+  callClaude,
+  extractJson,
+  loadSkillPrompt,
+} from "../services/claudeClient";
 import { canPerformStockFit } from "../services/planEnforcement";
 import { AppError } from "../types";
 import { StockFitResponseSchema } from "../validation/claudeResponses";
@@ -93,13 +97,49 @@ router.post(
       recent_insights: recentInsights ?? [],
     });
 
-    logger.info({ analystId: analyst_id, ticker }, "running stock-fit analysis");
+    logger.info(
+      { analystId: analyst_id, ticker },
+      "running stock-fit analysis",
+    );
     const raw = await callClaude(prompt, userMsg);
-    const fitParsed = StockFitResponseSchema.safeParse(extractJson(raw));
+    logger.info(
+      { analystId: analyst_id, ticker, rawResponse: raw },
+      "claude stock-fit raw response",
+    );
+
+    let extracted: unknown;
+    try {
+      extracted = extractJson(raw);
+    } catch (parseErr) {
+      logger.error(
+        { analystId: analyst_id, ticker, rawResponse: raw, parseErr },
+        "failed to extract JSON from stock-fit response",
+      );
+      throw new AppError(
+        "Claude החזיר תוצאת stock-fit שאינה JSON תקין",
+        500,
+        "CLAUDE_INVALID",
+      );
+    }
+
+    const fitParsed = StockFitResponseSchema.safeParse(extracted);
 
     if (!fitParsed.success) {
-      logger.error({ analystId: analyst_id, ticker, issues: fitParsed.error.issues }, "invalid stock-fit response");
-      throw new AppError("Claude החזיר תוצאת stock-fit לא תקינה", 500, "CLAUDE_INVALID");
+      logger.error(
+        {
+          analystId: analyst_id,
+          ticker,
+          rawResponse: raw,
+          extracted,
+          issues: fitParsed.error.issues,
+        },
+        "invalid stock-fit response",
+      );
+      throw new AppError(
+        "Claude החזיר תוצאת stock-fit לא תקינה",
+        500,
+        "CLAUDE_INVALID",
+      );
     }
 
     const result = {
@@ -122,7 +162,10 @@ router.post(
     });
 
     setCachedStockFit(analyst_id, ticker, result, getCacheTTL("FREE", false));
-    logger.info({ analystId: analyst_id, ticker, fitScore: result.fit_score }, "stock-fit complete");
+    logger.info(
+      { analystId: analyst_id, ticker, fitScore: result.fit_score },
+      "stock-fit complete",
+    );
 
     return res.status(200).json({
       result,
