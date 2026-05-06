@@ -6,13 +6,13 @@ export const InsightResponseSchema = z.object({
   direction: z.enum(["bullish", "bearish", "neutral"]),
   strength: z.number().min(1).max(10),
   confidence: z.number().min(1).max(10),
-  horizon: z.enum(["scalp", "swing", "long_term", "macro"]),
+  horizon: z.enum(["scalp", "swing", "position", "macro", "investment"]),
   reasoning: z.string(),
   key_levels: z
     .object({
-      entry: z.number().optional(),
-      stop: z.number().optional(),
-      target: z.number().optional(),
+      entry: z.number().nullable().optional(),
+      stop: z.number().nullable().optional(),
+      target: z.number().nullable().optional(),
     })
     .nullable()
     .optional(),

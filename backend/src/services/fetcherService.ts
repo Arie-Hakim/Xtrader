@@ -17,8 +17,7 @@ import {
   SaveResult,
 } from "../types/fetcher";
 
-const API_BASE =
-  process.env.TWITTER_API_URL ?? "https://api.twitter.com/2";
+const API_BASE = process.env.TWITTER_API_URL ?? "https://api.twitter.com/2";
 
 function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -144,7 +143,7 @@ export async function saveTweetsToDB(
     content: t.text,
     posted_at: t.created_at,
     is_processed: false,
-    is_financial: null,
+    is_financial: false,
   }));
 
   const { data, error } = await supabase
@@ -165,7 +164,10 @@ export async function saveTweetsToDB(
 export async function runFetchForAnalyst(
   analyst: DbAnalystRow,
 ): Promise<AnalystFetchResult> {
-  const base: Omit<AnalystFetchResult, "fetched" | "saved" | "skipped" | "errors"> = {
+  const base: Omit<
+    AnalystFetchResult,
+    "fetched" | "saved" | "skipped" | "errors"
+  > = {
     analystId: analyst.id,
     username: analyst.username,
   };
@@ -221,10 +223,7 @@ export async function runFetchForAnalyst(
     );
   }
 
-  logger.info(
-    { username: analyst.username, ...saveResult },
-    "שליפה הושלמה",
-  );
+  logger.info({ username: analyst.username, ...saveResult }, "שליפה הושלמה");
 
   return {
     ...base,

@@ -5,7 +5,10 @@ import { logger } from "../middleware/logger";
 import { runFetchForAnalyst } from "../services/fetcherService";
 import { buildDNA } from "../services/dnaBuilderService";
 import { parseUnprocessedTweets } from "../services/parserService";
-import { createAnalyst, getAnalystByUsername } from "../services/supabaseService";
+import {
+  createAnalyst,
+  getAnalystByUsername,
+} from "../services/supabaseService";
 import { AppError } from "../types";
 
 const router = Router();
@@ -20,7 +23,11 @@ router.post(
   "/run-full-pipeline",
   asyncHandler(async (req, res) => {
     if (process.env.NODE_ENV === "production") {
-      throw new AppError("נתיב זה אינו זמין בסביבת ייצור", 403, "PROD_DISABLED");
+      throw new AppError(
+        "נתיב זה אינו זמין בסביבת ייצור",
+        403,
+        "PROD_DISABLED",
+      );
     }
 
     const parsed = demoSchema.safeParse(req.body);
@@ -60,14 +67,19 @@ router.post(
       insightsCreated = parseResult.insights;
       parseSkipped = parseResult.skipped;
     } catch (err) {
-      logger.warn({ err, analystId: analyst.id }, "parse step failed — continuing");
+      logger.warn(
+        { err, analystId: analyst.id },
+        "parse step failed — continuing",
+      );
     }
 
     // Step 4: build DNA (skip if insufficient insights)
     let dnaVersion: number | null = null;
     let dnaSkipped: string | null = null;
     try {
-      const dnaResult = await buildDNA(analyst.id, { forceMin: force ? 20 : undefined });
+      const dnaResult = await buildDNA(analyst.id, {
+        forceMin: force ? 20 : undefined,
+      });
       dnaVersion = dnaResult.version;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -75,7 +87,10 @@ router.post(
       logger.info({ analystId: analyst.id, reason: msg }, "dna step skipped");
     }
 
-    logger.info({ username, tweetsFetched, insightsCreated, dnaVersion }, "demo pipeline complete");
+    logger.info(
+      { username, tweetsFetched, insightsCreated, dnaVersion },
+      "demo pipeline complete",
+    );
 
     res.json({
       analyst_id: analyst.id,

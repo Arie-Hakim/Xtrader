@@ -42,7 +42,8 @@ export async function parseUnprocessedTweets(analystId: string): Promise<{
     .limit(200);
 
   if (tErr) throw new AppError(tErr.message, 500, "DB_ERROR");
-  if (!tweets || tweets.length === 0) return { processed: 0, insights: 0, skipped: 0 };
+  if (!tweets || tweets.length === 0)
+    return { processed: 0, insights: 0, skipped: 0 };
 
   const prompt = loadSkillPrompt("insight-extractor");
   let processed = 0;
@@ -53,7 +54,10 @@ export async function parseUnprocessedTweets(analystId: string): Promise<{
   for (let i = 0; i < tweets.length; i += BATCH_SIZE) {
     batchNum++;
     const batch = (tweets as TweetRow[]).slice(i, i + BATCH_SIZE);
-    logger.info({ analystId, batch: batchNum, count: batch.length }, "processing batch");
+    logger.info(
+      { analystId, batch: batchNum, count: batch.length },
+      "processing batch",
+    );
 
     const results = await Promise.allSettled(
       batch.map((tweet) => processSingleTweet(tweet, analyst, prompt)),
@@ -78,19 +82,28 @@ export async function parseUnprocessedTweets(analystId: string): Promise<{
           err instanceof Anthropic.APIConnectionError;
 
         if (isTransient) {
-          logger.warn({ analystId, tweetId: tweet.tweet_id, err: err.message }, "transient error — not marking processed");
+          logger.warn(
+            { analystId, tweetId: tweet.tweet_id, err: err.message },
+            "transient error — not marking processed",
+          );
         } else {
           await supabase
             .from("tweets")
-            .update({ is_processed: true, is_financial: null })
+            .update({ is_processed: true, is_financial: false })
             .eq("id", tweet.id);
           skipped++;
-          logger.warn({ analystId, tweetId: tweet.tweet_id, err: err.message }, "tweet skipped permanently");
+          logger.warn(
+            { analystId, tweetId: tweet.tweet_id, err: err.message },
+            "tweet skipped permanently",
+          );
         }
       }
     }
 
-    logger.info({ analystId, processed, insights: insightsCreated, skipped, batchNum }, "batch done");
+    logger.info(
+      { analystId, processed, insights: insightsCreated, skipped, batchNum },
+      "batch done",
+    );
     if (i + BATCH_SIZE < tweets.length) await pause(500);
   }
 
@@ -110,13 +123,21 @@ async function processSingleTweet(
     analyst_type: analyst.analyst_type,
   };
 
-  logger.info({ analystId: analyst.id, tweetId: tweet.tweet_id }, "sending to claude");
+  logger.info(
+    { analystId: analyst.id, tweetId: tweet.tweet_id },
+    "sending to claude",
+  );
   const raw = await callClaude(prompt, JSON.stringify(input));
   const parsed = InsightResponseSchema.safeParse(extractJson(raw));
 
   if (!parsed.success) {
-    logger.warn({ tweetId: tweet.tweet_id, issues: parsed.error.issues }, "invalid insight response");
-    throw new Error(`Claude returned invalid Insight JSON: ${parsed.error.message}`);
+    logger.warn(
+      { tweetId: tweet.tweet_id, issues: parsed.error.issues },
+      "invalid insight response",
+    );
+    throw new Error(
+      `Claude returned invalid Insight JSON: ${parsed.error.message}`,
+    );
   }
 
   const data = parsed.data;
@@ -124,30 +145,47 @@ async function processSingleTweet(
 
   const insightRow = {
     analyst_id: analyst.id,
-    tweet_id: tweet.tweet_id,
     ticker: data.ticker,
-    insight: {
-      direction: data.direction,
-      strength: Math.round(data.strength),
-      confidence: Math.round(data.confidence),
-      horizon: data.horizon,
-      reasoning_he: data.reasoning,
-      key_levels: data.key_levels
-        ? Object.fromEntries(
-            Object.entries(data.key_levels).filter(([, v]) => v != null) as [string, number][],
-          )
-        : null,
+    direction: data.direction,
+    strength: Math.round(data.strength),
+    confidence: Math.round(data.confidence),
+    horizon: data.horizon,
+    reasoning_he: data.reasoning,
+    key_levels: data.key_levels
+      ? Object.fromEntries(
+          Object.entries(data.key_levels).filter(([, v]) => v != null) as [
+            string,
+            number,
+          ][],
+        )
+      : null,
+    velocity: {
+      delta: data.velocity.delta,
+      post_frequency: data.velocity.post_frequency,
     },
-    velocity: { delta: data.velocity.delta, post_frequency: data.velocity.post_frequency },
     decay: { half_life_days: data.decay.half_life_days },
     regime_fit: data.regime_fit,
-    raw_data: { tweet_url: data.raw_data.tweet_url },
+    raw_data: {
+      tweet_url: data.raw_data.tweet_url,
+      tweet_content: data.raw_data.tweet_content,
+      tweet_id: tweet.tweet_id,
+      posted_at: tweet.posted_at,
+    },
   };
 
-  await supabase
-    .from("insights")
-    .upsert(insightRow, { onConflict: "analyst_id,tweet_id", ignoreDuplicates: true });
+  const { error: iErr } = await supabase.from("insights").insert(insightRow);
 
-  logger.info({ analystId: analyst.id, tweetId: tweet.tweet_id, ticker: data.ticker }, "insight saved");
+  if (iErr) {
+    logger.error(
+      { analystId: analyst.id, tweetId: tweet.tweet_id, error: iErr },
+      "failed to save insight",
+    );
+    throw new Error(`Insight upsert failed: ${iErr.message}`);
+  }
+
+  logger.info(
+    { analystId: analyst.id, tweetId: tweet.tweet_id, ticker: data.ticker },
+    "insight saved",
+  );
   return { isFinancial: true };
 }

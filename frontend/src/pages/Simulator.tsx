@@ -128,29 +128,7 @@ export function Simulator() {
     queryFn: getAnalysts,
   });
 
-  const { data: analysts, isLoading: analystsLoading } = useQuery({
-    queryKey: ["analysts"],
-    queryFn: ({ signal }) => getAnalysts(signal),
-  });
-
-  const {
-    mutate,
-    data: result,
-    isPending,
-    error,
-    reset,
-  } = useMutation({
-    mutationFn: ({
-      analystId,
-      ticker,
-    }: {
-      analystId: string;
-      ticker: string;
-    }) => checkStockFit(analystId, ticker),
-  });
-
-  const selectedAnalyst = analysts?.find((a) => a.id === analystId);
-  const canSubmit = !!analystId && !!ticker.trim() && !isPending;
+  const selectedAnalyst = analysts.find((a) => a.id === analystId);
 
   async function handleCheck() {
     if (!analystId || !ticker.trim()) return;
