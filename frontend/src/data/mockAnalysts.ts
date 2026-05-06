@@ -905,62 +905,96 @@ const MOCK_QUOTES: Record<string, MockQuote[]> = {
 
 // ─── Stock Fit Results ────────────────────────────────────────────────────────
 
-const MOCK_FIT_RESULTS: StockFitResult[] = [
+const MOCK_FIT_RESULTS: Array<{
+  analystId: string;
+  ticker: string;
+  result: StockFitResult;
+}> = [
   {
-    id: "fit1",
-    analyst_id: "a1",
+    analystId: "a1",
     ticker: "NVDA",
-    fit_score: 8.7,
-    explanation_he:
-      "NVDA מתאימה מאוד לשיטת מאיר. המניה פרצה ממבנה קונסולידציה עם נפח גבוה, MACD חיובי ו-RSI ב-62 עם מקום לעלות. התבנית הטכנית היא בדיוק מה שמאיר מחפש.",
-    risks_he: [
-      "שוק כולו בירידות עלול למשוך גם NVDA",
-      "ציפיות גבוהות מאוד כבר מגולמות במחיר",
-      "CHOP regime יפגע בביצועי הסווינג",
-    ],
-    relevant_tweet_url: "https://x.com/StockWhisperer_IL/status/1781234567890",
-    relevant_tweet_content:
-      "NVDA פורצת $850 עם נפח ענק. MACD חוצה. יעד $920. זה הסטאפ שחיכיתי לו.",
-    current_regime: "BULL_STRONG",
-    expires_at: "2026-04-29T08:30:00Z",
-    created_at: "2026-04-22T08:30:00Z",
+    result: {
+      fit_score: 8.7,
+      fit_label: "מתאים מאוד",
+      regime_aligned: true,
+      reasons: [],
+      risks: [
+        {
+          risk_he: "שוק כולו בירידות עלול למשוך גם NVDA",
+          severity: "moderate",
+        },
+        {
+          risk_he: "ציפיות גבוהות מאוד כבר מגולמות במחיר",
+          severity: "moderate",
+        },
+        { risk_he: "CHOP regime יפגע בביצועי הסווינג", severity: "low" },
+      ],
+      relevant_tweet: {
+        content:
+          "NVDA פורצת $850 עם נפח ענק. MACD חוצה. יעד $920. זה הסטאפ שחיכיתי לו.",
+        tweet_url: "https://x.com/StockWhisperer_IL/status/1781234567890",
+        posted_at: "2026-04-22T08:30:00Z",
+        days_ago: 14,
+      },
+      regime_note_he: "שוק שורי חזק – תנאים אידיאליים לסווינג",
+      explanation_he:
+        "NVDA מתאימה מאוד לשיטת מאיר. המניה פרצה ממבנה קונסולידציה עם נפח גבוה, MACD חיובי ו-RSI ב-62 עם מקום לעלות. התבנית הטכנית היא בדיוק מה שמאיר מחפש.",
+      cache_ttl_hours: 4,
+    },
   },
   {
-    id: "fit2",
-    analyst_id: "a3",
+    analystId: "a3",
     ticker: "NVDA",
-    fit_score: 3.2,
-    explanation_he:
-      "NVDA אינה מתאימה לגישת הערך של שרה. המניה נסחרת ב-P/E של 65 – גבוה מאוד ביחס לממוצע ההיסטורי. אין מרווח ביטחון. שרה לא רוכשת מניות ספקולטיביות.",
-    risks_he: [
-      "P/E של 65 ללא מרווח ביטחון",
-      "תמחור מניח צמיחה מושלמת לנצח",
-      "כל אכזבה בדוחות תגרור ירידה חדה",
-    ],
-    relevant_tweet_url: "https://x.com/ValueHunter_TLV/status/1780334567890",
-    relevant_tweet_content:
-      "NVDA מדהימה כחברה. אבל P/E 65? אני לא מוצאת כאן מרווח ביטחון. זה לא ה-DNA שלי.",
-    current_regime: "BULL_STRONG",
-    expires_at: "2026-05-22T08:30:00Z",
-    created_at: "2026-04-22T08:30:00Z",
+    result: {
+      fit_score: 3.2,
+      fit_label: "לא מתאים",
+      regime_aligned: false,
+      reasons: [],
+      risks: [
+        { risk_he: "P/E של 65 ללא מרווח ביטחון", severity: "high" },
+        { risk_he: "תמחור מניח צמיחה מושלמת לנצח", severity: "moderate" },
+        { risk_he: "כל אכזבה בדוחות תגרור ירידה חדה", severity: "high" },
+      ],
+      relevant_tweet: {
+        content:
+          "NVDA מדהימה כחברה. אבל P/E 65? אני לא מוצאת כאן מרווח ביטחון. זה לא ה-DNA שלי.",
+        tweet_url: "https://x.com/ValueHunter_TLV/status/1780334567890",
+        posted_at: "2026-04-22T08:30:00Z",
+        days_ago: 14,
+      },
+      regime_note_he: "שוק שורי אינו מצדיק תמחור יתר",
+      explanation_he:
+        "NVDA אינה מתאימה לגישת הערך של שרה. המניה נסחרת ב-P/E של 65 – גבוה מאוד ביחס לממוצע ההיסטורי. אין מרווח ביטחון. שרה לא רוכשת מניות ספקולטיביות.",
+      cache_ttl_hours: 4,
+    },
   },
   {
-    id: "fit3",
-    analyst_id: "a5",
+    analystId: "a5",
     ticker: "GLD",
-    fit_score: 9.1,
-    explanation_he:
-      "זהב הוא ההמלצה המאקרו האולטימטיבית של רחל כרגע. DXY בחולשה, ריבית ריאלית יורדת, מתח גיאופוליטי גבוה. כל הגורמים המאקרו מצביעים על המשך עלייה בזהב.",
-    risks_he: [
-      "היפוך פתאומי בדולר עלול להכאיב",
-      "ריבית ריאלית עולה לפתע תשנה את התמונה",
-    ],
-    relevant_tweet_url: "https://x.com/MacroView_Global/status/1781234560001",
-    relevant_tweet_content:
-      "זהב בשיא כל הזמנים. DXY שבור. ריבית ריאלית שלילית. המאקרו ברור – זהב ממשיך.",
-    current_regime: "BULL_WEAK",
-    expires_at: "2026-05-24T07:00:00Z",
-    created_at: "2026-04-24T07:00:00Z",
+    result: {
+      fit_score: 9.1,
+      fit_label: "מתאים מאוד",
+      regime_aligned: true,
+      reasons: [],
+      risks: [
+        { risk_he: "היפוך פתאומי בדולר עלול להכאיב", severity: "moderate" },
+        {
+          risk_he: "ריבית ריאלית עולה לפתע תשנה את התמונה",
+          severity: "moderate",
+        },
+      ],
+      relevant_tweet: {
+        content:
+          "זהב בשיא כל הזמנים. DXY שבור. ריבית ריאלית שלילית. המאקרו ברור – זהב ממשיך.",
+        tweet_url: "https://x.com/MacroView_Global/status/1781234560001",
+        posted_at: "2026-04-24T07:00:00Z",
+        days_ago: 12,
+      },
+      regime_note_he: "שוק שורי חלש – מאקרו תומך בזהב",
+      explanation_he:
+        "זהב הוא ההמלצה המאקרו האולטימטיבית של רחל כרגע. DXY בחולשה, ריבית ריאלית יורדת, מתח גיאופוליטי גבוה. כל הגורמים המאקרו מצביעים על המשך עלייה בזהב.",
+      cache_ttl_hours: 4,
+    },
   },
 ];
 
@@ -999,10 +1033,10 @@ export function getMockStockFitResult(
 ): StockFitResult {
   const pre = MOCK_FIT_RESULTS.find(
     (r) =>
-      r.analyst_id === analystId &&
+      r.analystId === analystId &&
       r.ticker.toUpperCase() === ticker.toUpperCase(),
   );
-  if (pre) return pre;
+  if (pre) return pre.result;
 
   const analyst = MOCK_ANALYSTS.find((a) => a.id === analystId);
   const score = parseFloat(
@@ -1013,17 +1047,17 @@ export function getMockStockFitResult(
   );
 
   return {
-    id: `fit-${analystId}-${ticker}`,
-    analyst_id: analystId,
-    ticker: ticker.toUpperCase(),
     fit_score: Math.min(10, score),
-    explanation_he: `${ticker.toUpperCase()} נבדקה מול ה-DNA של ${analyst?.display_name ?? "האנליסט"}. ניתוח מבוסס על ${analyst?.tweets_learned_count ?? 500}+ ציוצים שנלמדו.`,
-    risks_he: [
-      "נתונים זמניים – ממתין לבדיקה מעמיקה",
-      "יש לאמת מול מצב השוק הנוכחי",
+    fit_label: score >= 7 ? "מתאים" : "לא מתאים",
+    regime_aligned: true,
+    reasons: [],
+    risks: [
+      { risk_he: "נתונים זמניים – ממתין לבדיקה מעמיקה", severity: "low" },
+      { risk_he: "יש לאמת מול מצב השוק הנוכחי", severity: "low" },
     ],
-    current_regime: "BULL_STRONG",
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date().toISOString(),
+    relevant_tweet: null,
+    regime_note_he: "ניתוח מבוסס על נתונים היסטוריים",
+    explanation_he: `${ticker.toUpperCase()} נבדקה מול ה-DNA של ${analyst?.display_name ?? "האנליסט"}. ניתוח מבוסס על ${analyst?.tweets_learned_count ?? 500}+ ציוצים שנלמדו.`,
+    cache_ttl_hours: 4,
   };
 }

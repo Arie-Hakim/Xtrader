@@ -33,16 +33,37 @@ export interface DNAProfileData {
   summary_he: string;
 }
 
+export interface StockFitRisk {
+  risk_he: string;
+  severity: "low" | "moderate" | "high";
+}
+
+export interface StockFitReason {
+  rule: string;
+  met: boolean;
+  detail_he: string;
+}
+
+export interface StockFitRelevantTweet {
+  content: string;
+  tweet_url: string;
+  posted_at: string;
+  days_ago: number;
+}
+
 export interface StockFitResult {
-  id: string;
-  analyst_id: string;
-  ticker: string;
-  fit_score: number; // 0-10
+  fit_score: number;
+  fit_label: string;
+  regime_aligned: boolean;
+  reasons: StockFitReason[];
+  risks: StockFitRisk[];
+  relevant_tweet: StockFitRelevantTweet | null;
+  regime_note_he: string;
   explanation_he: string;
-  risks_he: string[];
-  relevant_tweet_url?: string;
-  relevant_tweet_content?: string;
-  current_regime: MarketRegime;
-  expires_at: string;
-  created_at: string;
+  cache_ttl_hours: number;
+}
+
+export interface AnalystProfile {
+  analyst: Analyst;
+  dna: AnalystDNA | null;
 }

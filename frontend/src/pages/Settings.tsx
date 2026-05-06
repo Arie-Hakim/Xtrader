@@ -12,7 +12,10 @@ export function Settings() {
         <h2 className="text-base font-semibold text-slate-700">תוכנית מנוי</h2>
         <div className="flex items-center justify-between rounded-lg bg-slate-50 p-4">
           <span className="text-sm font-medium text-slate-700">חינמי</span>
-          <button className="rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors">
+          <button
+            type="button"
+            className="rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors"
+          >
             שדרג ל-Pro
           </button>
         </div>

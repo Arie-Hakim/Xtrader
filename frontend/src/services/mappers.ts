@@ -3,7 +3,10 @@ import type {
   AnalystDNA,
   AnalystProfile,
   DNAProfileData,
+  StockFitReason,
+  StockFitRelevantTweet,
   StockFitResult,
+  StockFitRisk,
 } from "@/types/analyst";
 import type {
   AnalystType,
@@ -19,14 +22,6 @@ function requireString(obj: Record<string, unknown>, key: string): string {
     throw new Error(`mappers: required field "${key}" missing or not a string`);
   }
   return val;
-}
-
-function optionalString(
-  obj: Record<string, unknown>,
-  key: string,
-): string | undefined {
-  const val = obj[key];
-  return typeof val === "string" ? val : undefined;
 }
 
 function requireNumber(obj: Record<string, unknown>, key: string): number {
@@ -201,34 +196,68 @@ export function mapInsight(raw: unknown): Insight {
 
 // ---------------------------------------------------------------------------
 // StockFitResult
-// M3: caller unwraps .result before passing here
-// M4: no fit_label / regime_aligned / reasons / regime_note_he in backend
 // ---------------------------------------------------------------------------
 
 export function mapStockFitResult(raw: unknown): StockFitResult {
   const r = asRecord(raw);
+
+  const risks: StockFitRisk[] = Array.isArray(r.risks)
+    ? (r.risks as unknown[]).map((item) => {
+        const rr =
+          typeof item === "object" && item !== null
+            ? (item as Record<string, unknown>)
+            : {};
+        const sev = rr.severity;
+        return {
+          risk_he: typeof rr.risk_he === "string" ? rr.risk_he : "",
+          severity:
+            sev === "low" || sev === "moderate" || sev === "high" ? sev : "low",
+        };
+      })
+    : [];
+
+  const reasons: StockFitReason[] = Array.isArray(r.reasons)
+    ? (r.reasons as unknown[]).map((item) => {
+        const rr =
+          typeof item === "object" && item !== null
+            ? (item as Record<string, unknown>)
+            : {};
+        return {
+          rule: typeof rr.rule === "string" ? rr.rule : "",
+          met: typeof rr.met === "boolean" ? rr.met : false,
+          detail_he: typeof rr.detail_he === "string" ? rr.detail_he : "",
+        };
+      })
+    : [];
+
+  const rawTweet =
+    r.relevant_tweet != null && typeof r.relevant_tweet === "object"
+      ? (r.relevant_tweet as Record<string, unknown>)
+      : null;
+  const relevant_tweet: StockFitRelevantTweet | null = rawTweet
+    ? {
+        content: typeof rawTweet.content === "string" ? rawTweet.content : "",
+        tweet_url:
+          typeof rawTweet.tweet_url === "string" ? rawTweet.tweet_url : "",
+        posted_at:
+          typeof rawTweet.posted_at === "string" ? rawTweet.posted_at : "",
+        days_ago: typeof rawTweet.days_ago === "number" ? rawTweet.days_ago : 0,
+      }
+    : null;
+
   return {
-    id: requireString(r, "id"),
-    analyst_id: requireString(r, "analyst_id"),
-    ticker: requireString(r, "ticker"),
     fit_score: typeof r.fit_score === "number" ? r.fit_score : 0,
+    fit_label: typeof r.fit_label === "string" ? r.fit_label : "",
+    regime_aligned:
+      typeof r.regime_aligned === "boolean" ? r.regime_aligned : false,
+    reasons,
+    risks,
+    relevant_tweet,
+    regime_note_he:
+      typeof r.regime_note_he === "string" ? r.regime_note_he : "",
     explanation_he:
       typeof r.explanation_he === "string" ? r.explanation_he : "",
-    risks_he: Array.isArray(r.risks_he)
-      ? (r.risks_he as unknown[]).filter(
-          (x): x is string => typeof x === "string",
-        )
-      : [],
-    relevant_tweet_url: optionalString(r, "relevant_tweet_url"),
-    relevant_tweet_content: optionalString(r, "relevant_tweet_content"),
-    current_regime:
-      typeof r.current_regime === "string"
-        ? (r.current_regime as MarketRegime)
-        : "CHOP",
-    expires_at:
-      typeof r.expires_at === "string"
-        ? r.expires_at
-        : new Date().toISOString(),
-    created_at: requireString(r, "created_at"),
+    cache_ttl_hours:
+      typeof r.cache_ttl_hours === "number" ? r.cache_ttl_hours : 4,
   };
 }

@@ -6,7 +6,7 @@ import { StatCard } from "@/components/common/StatCard";
 export function Dashboard() {
   const { data: analysts, isLoading: analystsLoading } = useQuery({
     queryKey: ["analysts"],
-    queryFn: ({ signal }) => getAnalysts(signal),
+    queryFn: getAnalysts,
   });
 
   const analystCount = analystsLoading ? "..." : String(analysts?.length ?? 0);
