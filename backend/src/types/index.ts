@@ -165,16 +165,22 @@ export interface DbAnalystDnaRow {
   created_at: string;
 }
 
-export interface DbInsightRow {
-  id: string;
-  analyst_id: string;
-  ticker: string;
+// JSONB column per spec §10 — wraps core insight fields
+export interface InsightJsonb {
   direction: string;
   strength: number;
   confidence: number;
   horizon: string;
   reasoning_he: string;
   key_levels: Record<string, number> | null;
+}
+
+export interface DbInsightRow {
+  id: string;
+  analyst_id: string;
+  tweet_id: string;
+  ticker: string;
+  insight: InsightJsonb;
   velocity: { delta: number; post_frequency: number };
   decay: { half_life_days: number };
   regime_fit: Record<string, number>;
