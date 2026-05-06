@@ -9,9 +9,12 @@ import { httpLogger } from "./middleware/logger";
 import { rateLimiter } from "./middleware/rateLimiter";
 import adminRouter from "./routes/admin";
 import analystsRouter from "./routes/analysts";
+import demoRouter from "./routes/demo";
+import dnaRouter from "./routes/dna";
 import fetcherRouter from "./routes/fetcher";
 import healthRouter from "./routes/health";
 import insightsRouter from "./routes/insights";
+import parseRouter from "./routes/parse";
 import stockFitRouter from "./routes/stockFit";
 import userAnalystsRouter from "./routes/userAnalysts";
 import { startScheduler } from "./cron/scheduler";
@@ -43,6 +46,9 @@ app.use("/api/insights", insightsRouter);
 app.use("/api/stock-fit", stockFitRouter);
 app.use("/api/user-analysts", userAnalystsRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/parse", parseRouter);
+app.use("/api/dna", dnaRouter);
+app.use("/api/demo", demoRouter);
 
 // Global error handler — must be last
 app.use(errorHandler);
