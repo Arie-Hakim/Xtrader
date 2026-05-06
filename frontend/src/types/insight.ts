@@ -41,6 +41,7 @@ export interface RawData {
 
 export interface Insight {
   id: string;
+  analyst_id?: string;
   ticker: string;
   analyst_type: AnalystType;
   direction: Direction;

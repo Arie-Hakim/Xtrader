@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FlaskConical, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -6,13 +7,7 @@ import { Badge } from "@/components/common/Badge";
 import { DNAViewer } from "@/components/analyst/DNAViewer";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <h3 className="mb-4 text-sm font-semibold text-slate-700">{title}</h3>
